@@ -39,6 +39,8 @@ class QMenu;
 class QLCChannel;
 class Doc;
 
+class FadeChannel;
+
 /** @addtogroup ui_simpledesk
  * @{
  */
@@ -112,6 +114,9 @@ public:
     /** Get the channel's current value */
     uchar value() const;
 
+    /** Set the channel's current fade mode */
+    void setFadeMode(int fade_mode);
+
 private slots:
     void slotSpinChanged(int value);
     void slotSliderChanged(int value);
@@ -119,6 +124,7 @@ private slots:
 
 signals:
     void valueChanged(quint32 fxi, quint32 channelIndex, uchar value);
+    void fadeModeChanged(quint32 fxi, quint32 channelIndex, int fade_mode);
 
     /*************************************************************************
      * Look & Feel
@@ -144,6 +150,16 @@ private:
     QToolButton* m_resetButton;
 
     bool m_showResetButton;
+
+    /*************************************************************************
+     * Fade Mode
+     *************************************************************************/
+    QToolButton * m_fadeModeButton;
+    private slots:
+    void slotDefaultModeSelected();
+    void slotFadeModeSelected();
+    void slotSnapStartModeSelected();
+    void slotSnapEndModeSelected();
 
     /*************************************************************************
      * Menu

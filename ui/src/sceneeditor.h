@@ -75,6 +75,7 @@ private:
 private:
     void init(bool applyValues);
     void setSceneValue(const SceneValue& scv);
+    void syncSceneFadeMode(const SceneValue & scv);
     SceneUiState * sceneUiState();
 
 private:
@@ -196,6 +197,7 @@ signals:
 
 private slots:
     void slotValueChanged(quint32 fxi, quint32 channel, uchar value);
+    void slotFadeModeChanged(quint32 fxi, quint32 channel, int fade_mode);
     void slotChecked(quint32 fxi, quint32 channel, bool state);
 
     void slotGoToNextTab();

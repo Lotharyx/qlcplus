@@ -292,7 +292,7 @@ void GenericFader::setFadeOut(bool enable, uint fadeTime)
             fc.setTarget(0);
             fc.setElapsed(0);
             fc.setReady(false);
-            fc.setFadeTime(fc.canFade() ? fadeTime : 0);
+            fc.setFadeTime(fadeTime);
         }
     }
 }

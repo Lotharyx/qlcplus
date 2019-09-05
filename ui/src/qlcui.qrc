@@ -109,6 +109,10 @@
         <file alias="resize.png">../../resources/icons/png/resize.png</file>
         <file alias="scanner.png">../../resources/icons/png/scanner.png</file>
         <file alias="scene.png">../../resources/icons/png/scene.png</file>
+        <file alias="scene_fade_default.png">../../resources/icons/png/scene_fade_default.png</file>
+        <file alias="scene_fade_fade.png">../../resources/icons/png/scene_fade_fade.png</file>
+        <file alias="scene_fade_snap_end.png">../../resources/icons/png/scene_fade_snap_end.png</file>
+        <file alias="scene_fade_snap_start.png">../../resources/icons/png/scene_fade_snap_start.png</file>
         <file alias="script.png">../../resources/icons/png/script.png</file>
         <file alias="sequence.png">../../resources/icons/png/sequence.png</file>
         <file alias="show.png">../../resources/icons/png/show.png</file>

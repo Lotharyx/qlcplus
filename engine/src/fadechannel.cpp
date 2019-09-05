@@ -28,6 +28,7 @@
 
 FadeChannel::FadeChannel()
     : m_flags(0)
+    , m_fade_mode(FadeMode::Default)
     , m_fixture(Fixture::invalidId())
     , m_universe(Universe::invalid())
     , m_channel(QLCChannel::invalid())
@@ -118,6 +119,16 @@ void FadeChannel::addFlag(int flag)
 void FadeChannel::removeFlag(int flag)
 {
     m_flags &= (~flag);
+}
+
+void FadeChannel::setFadeMode(FadeMode mode)
+{
+    m_fade_mode = mode;
+}
+
+FadeChannel::FadeMode FadeChannel::getFadeMode()
+{
+    return m_fade_mode;
 }
 
 void FadeChannel::autoDetect(const Doc *doc)
@@ -272,7 +283,10 @@ bool FadeChannel::isReady() const
 
 bool FadeChannel::canFade() const
 {
-    return (m_flags & CanFade) ? true : false;
+    if(m_fade_mode == FadeMode::Default)
+        return (flags() & CanFade) ? true : false;
+    else
+        return true;
 }
 
 void FadeChannel::setFadeTime(uint ms)
@@ -313,13 +327,26 @@ uchar FadeChannel::calculateCurrent(uint fadeTime, uint elapsedTime)
     }
     else if (elapsedTime == 0)
     {
-        m_current = m_start;
+        if(m_fade_mode == FadeMode::Snap) {
+            m_current = m_target;
+            setReady(true);
+        } else
+            m_current = m_start;
     }
     else
     {
-        m_current  = m_target - m_start;
-        m_current  = m_current * (qreal(elapsedTime) / qreal(fadeTime));
-        m_current += m_start;
+        if(m_fade_mode == FadeMode::Snap) {
+            // Seems maybe we missed elapsedTime == 0 for some reason.
+            m_current = m_target;
+            setReady(true);
+        } else
+        if(canFade()) {
+            if(m_fade_mode == FadeMode::Default || m_fade_mode == FadeMode::Fade) {
+                m_current  = m_target - m_start;
+                m_current  = m_current * (qreal(elapsedTime) / qreal(fadeTime));
+                m_current += m_start;
+            }
+        }
     }
 
     return uchar(m_current);

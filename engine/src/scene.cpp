@@ -198,6 +198,19 @@ QList <SceneValue> Scene::values() const
     return m_values.keys();
 }
 
+void Scene::setFadeMode(quint32 fxi, quint32 channel, int fade_mode) {
+    const SceneValue key(fxi, channel);
+    m_fade_modes[key] = static_cast<FadeChannel::FadeMode>(fade_mode);
+}
+
+int Scene::getFadeMode(quint32 fxi, quint32 channel) {
+    const SceneValue key(fxi, channel);
+    auto needle = m_fade_modes.find(key);
+    if(needle == m_fade_modes.end())
+        return 0;
+    return static_cast<int>(needle.value());
+}
+
 QList<quint32> Scene::components()
 {
     QList<quint32> ids;
@@ -430,6 +443,8 @@ bool Scene::saveXML(QXmlStreamWriter *doc)
         saveXMLFixtureValues(doc, fxId, currFixValues);
     }
 
+    saveXMLFadeModes(doc);
+
     /* End the <Function> tag */
     doc->writeEndElement();
 
@@ -444,6 +459,42 @@ bool Scene::saveXMLFixtureValues(QXmlStreamWriter* doc, quint32 fixtureID, QStri
         doc->writeCharacters(values.join(","));
     doc->writeEndElement();
     return true;
+}
+
+bool Scene::saveXMLFadeModes(QXmlStreamWriter * doc) {
+    doc->writeStartElement(KXMLQLCSceneFadeModes);
+    for(auto key = m_fade_modes.keyBegin(); key != m_fade_modes.keyEnd(); ++key) {
+        FadeChannel::FadeMode fadeMode = m_fade_modes[*key];
+        if(fadeMode != FadeChannel::FadeMode::Default) {
+            doc->writeStartElement(KXMLQLCFadeMode);
+            doc->writeAttribute(KXMLQLCFixtureID, QString::number(key->fxi));
+            doc->writeAttribute(KXMLQLCChannel, QString::number(key->channel));
+            saveXMLFadeMode(doc, fadeMode);
+            doc->writeEndElement();
+        }
+    }
+    doc->writeEndElement();
+    return true;
+}
+
+void Scene::saveXMLFadeMode(QXmlStreamWriter * doc, FadeChannel::FadeMode mode) {
+    switch(mode) {
+        case FadeChannel::FadeMode::Default:
+            doc->writeCharacters(KXMLQLCFadeModeDefault);
+            break;
+
+        case FadeChannel::FadeMode::Fade:
+            doc->writeCharacters(KXMLQLCFadeModeFade);
+            break;
+
+        case FadeChannel::FadeMode::Snap:
+            doc->writeCharacters(KXMLQLCFadeModeSnap);
+            break;
+
+        case FadeChannel::FadeMode::SnapDelay:
+            doc->writeCharacters(KXMLQLCFadeModeSnapDelay);
+            break;
+    }
 }
 
 bool Scene::loadXML(QXmlStreamReader &root)
@@ -521,6 +572,31 @@ bool Scene::loadXML(QXmlStreamReader &root)
                     scv.channel = QString(varray.at(i)).toUInt();
                     scv.value = uchar(QString(varray.at(i + 1)).toInt());
                     setValue(scv);
+                }
+            }
+        }
+        else if(root.name() == KXMLQLCSceneFadeModes)
+        {
+            while(root.readNextStartElement()) {
+                if(root.name() == KXMLQLCFadeMode) {
+                    QXmlStreamAttributes attrs = root.attributes();
+                    if(attrs.hasAttribute(KXMLQLCFixtureID)) {
+                        quint32 fxi = attrs.value(KXMLQLCFixtureID).toString().toUInt();
+                        if(attrs.hasAttribute(KXMLQLCChannel)) {
+                            quint32 channel = attrs.value(KXMLQLCChannel).toString().toUInt();
+                            FadeChannel::FadeMode mode = FadeChannel::FadeMode::Default;
+                            QString modeText = root.readElementText();
+                            if(modeText == KXMLQLCFadeModeFade)
+                                mode = FadeChannel::FadeMode::Fade;
+                            if(modeText == KXMLQLCFadeModeSnap)
+                                mode = FadeChannel::FadeMode::Snap;
+                            if(modeText == KXMLQLCFadeModeSnapDelay)
+                                mode = FadeChannel::FadeMode::SnapDelay;
+                            setFadeMode(fxi, channel, static_cast<int>(mode));
+                        }
+                    }
+                } else {
+                    root.skipCurrentElement();
                 }
             }
         }
@@ -666,6 +742,7 @@ void Scene::write(MasterTimer *timer, QList<Universe*> ua)
             }
 
             FadeChannel *fc = fader->getChannelFader(doc(), ua[universe], scv.fxi, scv.channel);
+            fc->setFadeMode(static_cast<FadeChannel::FadeMode>(getFadeMode(scv.fxi, scv.channel)));
 
             /** If a blend Function has been set, check if this channel needs to
              *  be blended from a previous value. If so, mark it for crossfade
@@ -686,14 +763,13 @@ void Scene::write(MasterTimer *timer, QList<Universe*> ua)
                 qDebug() << "Scene" << name() << "add channel" << scv.channel << "from" << fc->current() << "to" << scv.value;
             }
 
+            // Apply scene fade mode override if necessary
+
+
             fc->setStart(fc->current());
             fc->setTarget(scv.value);
 
-            if (fc->canFade() == false)
-            {
-                fc->setFadeTime(0);
-            }
-            else
+            if (fc->canFade())
             {
                 if (tempoType() == Beats)
                 {

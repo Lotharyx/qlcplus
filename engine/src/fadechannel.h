@@ -52,7 +52,14 @@ public:
         Relative    = (1 << 5),     /** Relative position */
         Override    = (1 << 6),     /** Override the current universe value */
         Autoremove  = (1 << 7),     /** Automatically remove the channel once value is written */
-        CrossFade   = (1 << 8)      /** Channel subject to crossfade */
+        CrossFade   = (1 << 8),     /** Channel subject to crossfade */
+    };
+
+    enum class FadeMode {
+        Default,                    /** Normal behavior based on CanFade flag */
+        Fade,                       /** Fade regardless of CanFade */
+        Snap,                       /** Snap immediately (as if CanFade is not set) */
+        SnapDelay,                  /** Snap after fade time */
     };
 
     /** Create a new FadeChannel with empty/invalid values */
@@ -80,6 +87,9 @@ public:
     void addFlag(int flag);
     void removeFlag(int flag);
 
+    void setFadeMode(FadeMode mode);
+    FadeMode getFadeMode();
+
 protected:
     void autoDetect(const Doc *doc);
 
@@ -87,6 +97,7 @@ private:
     /** Bitmask including the channel type
      *  and, if needed, more flags */
     int m_flags;
+    FadeMode m_fade_mode;
 
     /************************************************************************
      * Values

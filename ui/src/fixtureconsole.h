@@ -100,6 +100,9 @@ public:
     /** Set the value of one scene channel */
     void setSceneValue(const SceneValue& scv);
 
+    /** Set the value of one scene channel's fade mode */
+    void setSceneFadeMode(const SceneValue& scv, int fade_mode);
+
     /** Get all channel's values */
     QList <SceneValue> values() const;
 
@@ -130,6 +133,9 @@ signals:
 
     /** Emitted when a channel's check state is changed */
     void checked(quint32 fxi, quint32 channel, bool state);
+
+    /** Emitted when a channel's fade mode override is changed */
+    void fadeModeChanged(quint32 fxi, quint32 channel, int mode);
 
 private:
     /** Get a console channel instance for the given relative channel */

@@ -129,6 +129,8 @@ void FixtureConsole::setFixture(quint32 id)
                 this, SIGNAL(valueChanged(quint32,quint32,uchar)));
         connect(cc, SIGNAL(checked(quint32,quint32,bool)),
                 this, SIGNAL(checked(quint32,quint32,bool)));
+        connect(cc, SIGNAL(fadeModeChanged(quint32,quint32,int)),
+                this, SIGNAL(fadeModeChanged(quint32,quint32,int)));
     }
 
     /* Make a spacer item eat excess space to justify channels left */
@@ -222,6 +224,21 @@ void FixtureConsole::setSceneValue(const SceneValue& scv)
         {
             cc->setChecked(true);
             cc->setValue(scv.value);
+        }
+    }
+}
+
+void FixtureConsole::setSceneFadeMode(const SceneValue& scv, int fade_mode) {
+    Q_ASSERT(scv.fxi == m_fixture);
+
+    QListIterator <ConsoleChannel*> it(m_channels);
+    while (it.hasNext() == true)
+    {
+        ConsoleChannel* cc = it.next();
+        Q_ASSERT(cc != NULL);
+        if (cc->channelIndex() == scv.channel)
+        {
+            cc->setFadeMode(fade_mode);
         }
     }
 }

@@ -36,6 +36,7 @@
 #include "apputil.h"
 #include "mastertimer.h"
 #include "consolechannel.h"
+#include "fadechannel.h"
 
 /*****************************************************************************
  * Initialization
@@ -95,6 +96,29 @@ void ConsoleChannel::init()
             initMenu();
         else
             m_presetButton->setStyleSheet("QToolButton { border-image: url(:/intensity.png) 0 0 0 0 stretch stretch; }");
+    }
+
+    // fade mode button.  Does this channel fade or snap?  If the group checkbox isn't visible,
+    // this control probably also isn't necessary.
+    if(isCheckable()) {
+        m_fadeModeButton = new QToolButton(this);
+        m_fadeModeButton->setStyle(AppUtil::saneStyle());
+        layout()->addWidget(m_fadeModeButton);
+        layout()->setAlignment(m_fadeModeButton, Qt::AlignHCenter);
+        m_fadeModeButton->setMinimumSize(QSize(32, 16));
+        m_fadeModeButton->setMaximumSize(QSize(32, 16));
+        QMenu * fadeMenu = new QMenu(this);
+        m_fadeModeButton->setMenu(fadeMenu);
+        m_fadeModeButton->setPopupMode(QToolButton::InstantPopup);
+        m_fadeModeButton->setStyleSheet("QToolButton { border-image: url(:/scene_fade_default.png) 0 0 0 0 stretch stretch; }");
+        QAction * action = fadeMenu->addAction(QString("Channel Default"), [this](){slotDefaultModeSelected();});
+        action->setToolTip("Snap or fade based on fixture settings");
+        action = fadeMenu->addAction("Fade", [this](){slotFadeModeSelected();});
+        action->setToolTip("Always fade this channel");
+        action = fadeMenu->addAction("Snap Start", [this](){slotSnapStartModeSelected();});
+        action->setToolTip("Snap this channel when transition begins");
+        action = fadeMenu->addAction("Snap End", [this](){slotSnapEndModeSelected();});
+        action->setToolTip("Snap this channel when transition completes");
     }
 
     /* Value edit */
@@ -256,6 +280,27 @@ void ConsoleChannel::setValue(uchar value, bool apply)
 uchar ConsoleChannel::value() const
 {
     return uchar(m_slider->value());
+}
+
+
+void ConsoleChannel::setFadeMode(int fade_mode) {
+    switch(static_cast<FadeChannel::FadeMode>(fade_mode)) {
+        case FadeChannel::FadeMode::Default:
+            m_fadeModeButton->setStyleSheet("QToolButton { border-image: url(:/scene_fade_default.png) 0 0 0 0 stretch stretch; }");
+            break;
+
+        case FadeChannel::FadeMode::Fade:
+            m_fadeModeButton->setStyleSheet("QToolButton { border-image: url(:/scene_fade_fade.png) 0 0 0 0 stretch stretch; }");
+            break;
+
+        case FadeChannel::FadeMode::Snap:
+            m_fadeModeButton->setStyleSheet("QToolButton { border-image: url(:/scene_fade_snap_start.png) 0 0 0 0 stretch stretch; }");
+            break;
+
+        case FadeChannel::FadeMode::SnapDelay:
+            m_fadeModeButton->setStyleSheet("QToolButton { border-image: url(:/scene_fade_snap_end.png) 0 0 0 0 stretch stretch; }");
+            break;
+    }
 }
 
 void ConsoleChannel::slotSpinChanged(int value)
@@ -632,6 +677,26 @@ void ConsoleChannel::contextMenuEvent(QContextMenuEvent* e)
         m_menu->exec(e->globalPos());
         e->accept();
     }
+}
+
+void ConsoleChannel::slotDefaultModeSelected() {
+    setFadeMode(static_cast<int>(FadeChannel::FadeMode::Default));
+    emit fadeModeChanged(m_fixture, m_chIndex, static_cast<int>(FadeChannel::FadeMode::Default));
+}
+
+void ConsoleChannel::slotFadeModeSelected() {
+    setFadeMode(static_cast<int>(FadeChannel::FadeMode::Fade));
+    emit fadeModeChanged(m_fixture, m_chIndex, static_cast<int>(FadeChannel::FadeMode::Fade));
+}
+
+void ConsoleChannel::slotSnapStartModeSelected() {
+    setFadeMode(static_cast<int>(FadeChannel::FadeMode::Snap));
+    emit fadeModeChanged(m_fixture, m_chIndex, static_cast<int>(FadeChannel::FadeMode::Snap));
+}
+
+void ConsoleChannel::slotSnapEndModeSelected() {
+    setFadeMode(static_cast<int>(FadeChannel::FadeMode::SnapDelay));
+    emit fadeModeChanged(m_fixture, m_chIndex, static_cast<int>(FadeChannel::FadeMode::SnapDelay));
 }
 
 void ConsoleChannel::slotContextMenuTriggered(QAction* action)

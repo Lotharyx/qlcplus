@@ -392,6 +392,19 @@ void SceneEditor::setSceneValue(const SceneValue& scv)
 }
 
 
+void SceneEditor::syncSceneFadeMode(const SceneValue& scv) {
+    FixtureConsole* fc;
+    Fixture* fixture;
+
+    fixture = m_doc->fixture(scv.fxi);
+    Q_ASSERT(fixture != NULL);
+
+    fc = fixtureConsole(fixture);
+    if (fc != NULL)
+        fc->setSceneFadeMode(scv, m_scene->getFadeMode(scv.fxi, scv.channel));
+}
+
+
 void SceneEditor::setBlindModeEnabled(bool active)
 {
     m_blindAction->setChecked(active);
@@ -981,8 +994,10 @@ void SceneEditor::slotViewModeChanged(bool tabbed, bool applyValues)
                 SceneValue scv(it.next());
                 if (applyValues == false)
                     scv.value = 0;
-                if (scv.fxi == fixture->id())
+                if (scv.fxi == fixture->id()) {
                     setSceneValue(scv);
+                    syncSceneFadeMode(scv);
+                }
             }
         }
     }
@@ -1529,6 +1544,8 @@ void SceneEditor::addFixtureTab(Fixture* fixture, quint32 channel)
 
     connect(console, SIGNAL(valueChanged(quint32,quint32,uchar)),
             this, SLOT(slotValueChanged(quint32,quint32,uchar)));
+    connect(console, SIGNAL(fadeModeChanged(quint32,quint32,int)),
+            this, SLOT(slotFadeModeChanged(quint32,quint32,int)));
     connect(console, SIGNAL(checked(quint32,quint32,bool)),
             this, SLOT(slotChecked(quint32,quint32,bool)));
 
@@ -1595,6 +1612,14 @@ void SceneEditor::slotValueChanged(quint32 fxi, quint32 channel, uchar value)
 
     if (m_source != NULL)
         m_source->set(fxi, channel, value);
+}
+
+void SceneEditor::slotFadeModeChanged(quint32 fxi, quint32 channel, int fade_mode) {
+    if (m_initFinished == true)
+    {
+        Q_ASSERT(m_scene != NULL);
+        m_scene->setFadeMode(fxi, channel, fade_mode);
+    }
 }
 
 void SceneEditor::slotChecked(quint32 fxi, quint32 channel, bool state)

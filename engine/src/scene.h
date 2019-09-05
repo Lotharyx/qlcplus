@@ -39,6 +39,13 @@ class QXmlStreamReader;
 
 #define KXMLQLCFixtureValues "FixtureVal"
 #define KXMLQLCSceneChannelGroupsValues "ChannelGroupsVal"
+#define KXMLQLCSceneFadeModes "FadeModes"
+#define KXMLQLCFadeMode "FadeMode"
+#define KXMLQLCFadeModeDefault "Default"
+#define KXMLQLCFadeModeFade "Fade"
+#define KXMLQLCFadeModeSnap "Snap"
+#define KXMLQLCFadeModeSnapDelay "SnapDelay"
+
 
 // Legacy: these do not contain ChannelGroups values
 #define KXMLQLCSceneChannelGroups "ChannelGroups"
@@ -133,6 +140,22 @@ public:
      */
     QList <SceneValue> values() const;
 
+    /**
+     * @brief setFadeMode Set the fade mode for a channel in a scene
+     * @param fxi
+     * @param ch
+     * @param fade_mode A member of FadeChannel::FadeMode cast to int
+     */
+    void setFadeMode(quint32 fxi, quint32 ch, int fade_mode);
+
+    /**
+     * @brief getFadeMode
+     * @param fxi
+     * @param ch
+     * @return The fade mode setting
+     */
+    int getFadeMode(quint32 fxi, quint32 ch);
+
     /** @reimp */
     QList<quint32> components();
 
@@ -153,6 +176,7 @@ signals:
 
 protected:
     QMap <SceneValue, uchar> m_values;
+    QMap <SceneValue, FadeChannel::FadeMode> m_fade_modes;
     QMutex m_valueListMutex;
 
     /*********************************************************************
@@ -217,6 +241,8 @@ public:
 
 private:
     static bool saveXMLFixtureValues(QXmlStreamWriter* doc, quint32 fixtureID, QStringList const& values);
+    bool saveXMLFadeModes(QXmlStreamWriter * doc);
+    static void saveXMLFadeMode(QXmlStreamWriter * doc, FadeChannel::FadeMode mode);
 
     /*********************************************************************
      * Flash
